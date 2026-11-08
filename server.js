@@ -3,9 +3,13 @@
 // No dependencies: Node 22+ only.
 //
 // Environment variables (set with `fly secrets set ...`):
-//   RESEND_API_KEY  API key from resend.com (required to send email)
-//   ENQUIRY_TO      Where enquiries are sent, e.g. hello@retrobooth.com.au
-//   ENQUIRY_FROM    Verified sender, e.g. "Retro Booth website <website@retrobooth.com.au>"
+// Enquiries are sent through Microsoft 365 (Microsoft Graph sendMail) using an
+// Entra app registration with the Mail.Send application permission.
+//   MS_TENANT_ID      Directory (tenant) ID of the Microsoft 365 organisation
+//   MS_CLIENT_ID      Application (client) ID of the app registration
+//   MS_CLIENT_SECRET  Client secret value of the app registration
+//   MAIL_FROM         Mailbox the email is sent from, e.g. hello@retrobooth.com.au
+//   ENQUIRY_TO        Where enquiries are delivered (comma-separated), e.g. hello@retrobooth.com.au
 //   PORT            Defaults to 8080
 
 'use strict';
@@ -90,6 +94,24 @@ function serveFile(req, res, file, st) {
   });
 }
 
+// ---- Microsoft 365 (Graph) mail ----
+const LOGIN_URL = process.env.MS_LOGIN_URL || 'https://login.microsoftonline.com';
+const GRAPH_URL = process.env.MS_GRAPH_URL || 'https://graph.microsoft.com';
+let cachedToken = null; // { value, expires }
+async function graphToken(tenant, clientId, secret) {
+  if (cachedToken && cachedToken.expires > Date.now() + 60000) return cachedToken.value;
+  const r = await fetch(`${LOGIN_URL}/${encodeURIComponent(tenant)}/oauth2/v2.0/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: clientId, client_secret: secret, grant_type: 'client_credentials', scope: 'https://graph.microsoft.com/.default' }),
+    signal: AbortSignal.timeout(10000),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.access_token) throw new Error(`token request failed (${r.status}) ${j.error || ''} ${(j.error_description || '').slice(0, 200)}`);
+  cachedToken = { value: j.access_token, expires: Date.now() + (Number(j.expires_in) || 3600) * 1000 };
+  return cachedToken.value;
+}
+
 // ---- Enquiry form ----
 const hits = new Map(); // ip -> [timestamps]
 function rateLimited(ip) {
@@ -135,30 +157,33 @@ function handleEnquiry(req, res) {
     if (!v.name || !v.venue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) {
       return errorPage(res, 400, 'Please include your name, business or venue, and a valid email address.');
     }
-    const { RESEND_API_KEY, ENQUIRY_TO, ENQUIRY_FROM } = process.env;
-    if (!RESEND_API_KEY || !ENQUIRY_TO || !ENQUIRY_FROM) {
-      console.error('Enquiry not sent: RESEND_API_KEY, ENQUIRY_TO or ENQUIRY_FROM is not set');
+    const { MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET, MAIL_FROM, ENQUIRY_TO } = process.env;
+    if (!MS_TENANT_ID || !MS_CLIENT_ID || !MS_CLIENT_SECRET || !MAIL_FROM || !ENQUIRY_TO) {
+      console.error('Enquiry not sent: MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET, MAIL_FROM or ENQUIRY_TO is not set');
       return errorPage(res, 503, 'Our enquiry form is temporarily unavailable.');
     }
     const rows = FIELDS.filter(([k]) => v[k]).map(([k, label]) => [label, v[k]]);
-    const text = rows.map(([l, val]) => `${l}: ${val}`).join('\n');
     const html = '<table cellpadding="6" style="font-family:sans-serif;border-collapse:collapse">' +
       rows.map(([l, val]) => `<tr><th align="left" valign="top">${esc(l)}</th><td>${esc(val).replace(/\n/g, '<br>')}</td></tr>`).join('') + '</table>';
     try {
-      const r = await fetch(process.env.RESEND_API_URL || 'https://api.resend.com/emails', {
+      const token = await graphToken(MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET);
+      const r = await fetch(`${GRAPH_URL}/v1.0/users/${encodeURIComponent(MAIL_FROM)}/sendMail`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: ENQUIRY_FROM,
-          to: ENQUIRY_TO.split(',').map((s) => s.trim()).filter(Boolean),
-          reply_to: v.email,
-          subject: `Website enquiry: ${v.name} (${v.venue})`,
-          text, html,
+          message: {
+            subject: `Website enquiry: ${v.name} (${v.venue})`,
+            body: { contentType: 'HTML', content: html },
+            toRecipients: ENQUIRY_TO.split(',').map((s) => s.trim()).filter(Boolean).map((address) => ({ emailAddress: { address } })),
+            replyTo: [{ emailAddress: { address: v.email, name: v.name } }],
+          },
+          saveToSentItems: true,
         }),
         signal: AbortSignal.timeout(10000),
       });
-      if (!r.ok) {
-        console.error('Resend error', r.status, (await r.text()).slice(0, 500));
+      if (r.status !== 202) {
+        console.error('Microsoft Graph sendMail error', r.status, (await r.text()).slice(0, 500));
+        if (r.status === 401) cachedToken = null;
         return errorPage(res, 502, 'Our email service had a problem.');
       }
       console.log('Enquiry sent for', v.venue);
