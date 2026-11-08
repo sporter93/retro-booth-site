@@ -27,7 +27,7 @@ fly secrets set RESEND_API_KEY=re_xxx \
 ```sh
 brew install flyctl
 fly auth login
-fly launch --no-deploy --copy-config   # first time only; keeps fly.toml
+# App already exists: retro-booth-site-mmim3a (The Instabooth org)
 fly secrets set ...                    # see above
 fly deploy
 fly certs add retrobooth.com.au

@@ -1,6 +1,6 @@
 # Fly.io config for the Retro Booth website.
-# If the app name "retrobooth" is taken, change it here before `fly launch`.
-app = "retrobooth"
+# App lives in The Instabooth org on Fly.io.
+app = "retro-booth-site-mmim3a"
 primary_region = "syd"
 
 [build]
