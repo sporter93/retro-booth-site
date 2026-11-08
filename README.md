@@ -1,16 +1,43 @@
 # Retro Booth website
 
-Marketing site for Retro Booth: commercial photo booths that venues own.
+Marketing site for Retro Booth (retrobooth.com.au), hosted on Fly.io.
 
-Static site, no build step. Live at https://retrobooth.com.au (Netlify, deploys from `main`).
+## Layout
 
-## Files
+- `site/` — the static website (HTML, images, sitemap, robots.txt, llms.txt). Edit pages here.
+- `server.js` — small Node server (no dependencies) that serves `site/` and emails enquiries from the homepage form (`POST /api/enquiry`).
+- `Dockerfile`, `fly.toml` — Fly.io build and app settings (Sydney region).
 
-- `index.html`: the homepage (pre-rendered HTML with JSON-LD structured data)
-- `robots.txt`, `sitemap.xml`, `llms.txt`: search and AI crawler files
-- `favicon.*`, `apple-touch-icon.png`, `icon-*.png`, `site.webmanifest`: icons
-- `assets/`: photos used on the page
+## Enquiry email
 
-## Enquiry form
+The form posts to `/api/enquiry`. The server checks the spam trap, rate-limits (5 per connection per 10 minutes), then sends the enquiry through [Resend](https://resend.com) with the visitor's email as the reply-to address.
 
-The enquiry form uses Netlify Forms (form name `enquiry`, honeypot field `bot-field`). Submissions appear in the Netlify dashboard under Forms. Email notifications are set in the Netlify site's form notification settings.
+Set these once as Fly secrets (never commit them):
+
+```sh
+fly secrets set RESEND_API_KEY=re_xxx \
+  ENQUIRY_TO=hello@retrobooth.com.au \
+  ENQUIRY_FROM="Retro Booth website <website@retrobooth.com.au>"
+```
+
+`ENQUIRY_FROM` must be on a domain verified in Resend (add the DNS records Resend gives you for retrobooth.com.au).
+
+## Deploy
+
+```sh
+brew install flyctl
+fly auth login
+fly launch --no-deploy --copy-config   # first time only; keeps fly.toml
+fly secrets set ...                    # see above
+fly deploy
+fly certs add retrobooth.com.au
+fly certs add www.retrobooth.com.au
+```
+
+Then point DNS at Fly using the records `fly certs show retrobooth.com.au` prints. After that, `fly deploy` publishes any change.
+
+## Run locally
+
+```sh
+node server.js   # http://localhost:8080
+```

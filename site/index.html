@@ -473,9 +473,8 @@
         <p class="contact-line"><a href="tel:+61388998999">03 8899 8999</a></p>
         <p class="contact-line"><a href="mailto:hello@retrobooth.com.au">hello@retrobooth.com.au</a></p>
       </div>
-      <!-- Netlify Forms: Netlify detects this form at deploy and emails submissions. Submissions appear in the Netlify dashboard under Forms. -->
-      <form class="enquiry" name="enquiry" action="/thanks/" method="POST" data-netlify="true" data-netlify-honeypot="bot-field">
-        <input type="hidden" name="form-name" value="enquiry">
+      <!-- Enquiries are posted to /api/enquiry, which server.js emails to the Retro Booth inbox. -->
+      <form class="enquiry" name="enquiry" action="/api/enquiry" method="POST">
         <p hidden><label>Do not fill this in: <input name="bot-field"></label></p>
         <div class="row">
           <div class="field"><label for="f-name">Name *</label><input id="f-name" name="name" type="text" autocomplete="name" placeholder="Your name" required></div>

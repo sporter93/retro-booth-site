@@ -1,0 +1,7 @@
+.git
+.github
+.nojekyll
+README.md
+fly.toml
+Dockerfile
+.dockerignore
