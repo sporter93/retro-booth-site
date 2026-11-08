@@ -2,20 +2,36 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://retrobooth.com.au/</loc>
-    <lastmod>2026-11-06</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>https://retrobooth.com.au/assets/web-amore-party-wide.jpg</image:loc>
-      <image:title>Retro Booth photo booth at a venue</image:title>
-    </image:image>
-    <image:image>
-      <image:loc>https://retrobooth.com.au/assets/web-amore-group-booth.jpg</image:loc>
-      <image:title>Retro Booth Standing Booth</image:title>
-    </image:image>
-    <image:image>
-      <image:loc>https://retrobooth.com.au/assets/booth-stainless-studio.jpg</image:loc>
-      <image:title>Retro Booth Sitting Booth</image:title>
-    </image:image>
+    <lastmod>2026-11-07</lastmod>
+    <image:image><image:loc>https://retrobooth.com.au/assets/venue-activation-guests.jpg</image:loc><image:caption>Guests collecting their photo strip from a branded photo booth</image:caption></image:image>
+    <image:image><image:loc>https://retrobooth.com.au/assets/booth-black-curtain-bar.jpg</image:loc><image:caption>Black standing photo booth with red curtain</image:caption></image:image>
+  </url>
+  <url>
+    <loc>https://retrobooth.com.au/booths/standing-booth/</loc>
+    <lastmod>2026-11-07</lastmod>
+    <image:image><image:loc>https://retrobooth.com.au/assets/booth-stainless-studio.jpg</image:loc><image:caption>Standing photo booth</image:caption></image:image>
+  </url>
+  <url>
+    <loc>https://retrobooth.com.au/booths/sitting-booth/</loc>
+    <lastmod>2026-11-07</lastmod>
+    <image:image><image:loc>https://retrobooth.com.au/assets/booth-white-branded.jpg</image:loc><image:caption>Sitting photo booth</image:caption></image:image>
+  </url>
+  <url>
+    <loc>https://retrobooth.com.au/venues/</loc>
+    <lastmod>2026-11-07</lastmod>
+    <image:image><image:loc>https://retrobooth.com.au/assets/venues-hero.jpg</image:loc><image:caption>Wedding guests laughing in front of a photo booth with a PHOTOS sign</image:caption></image:image>
+  </url>
+  <url>
+    <loc>https://retrobooth.com.au/booths/open-style/</loc>
+    <lastmod>2026-11-07</lastmod>
+    <image:image><image:loc>https://retrobooth.com.au/assets/open-style.jpg</image:loc><image:caption>Open Style photo booth in a small room</image:caption></image:image>
+  </url>
+  <url>
+    <loc>https://retrobooth.com.au/privacy/</loc>
+    <lastmod>2026-11-07</lastmod>
+  </url>
+  <url>
+    <loc>https://retrobooth.com.au/photo-booth-revenue-share-vs-buying/</loc>
+    <lastmod>2026-11-08</lastmod>
   </url>
 </urlset>
