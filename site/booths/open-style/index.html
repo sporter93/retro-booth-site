@@ -65,26 +65,44 @@
   ]
 }
 </script>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="/assets/fonts/archivo-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/alfa-slab-one-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/mr-dafoe-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-  /* Retro Booth brand v2.0. Print White, Booth Black, Signal Red. */
+  /* Retro Booth design system: paper and Booth Black, Signal Red for the primary CTA only. */
+  @font-face { font-family: "Archivo"; src: url("/assets/fonts/archivo-latin-var.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Alfa Slab One"; src: url("/assets/fonts/alfa-slab-one-latin.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Mr Dafoe"; src: url("/assets/fonts/mr-dafoe-latin.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: block; }
+  @font-face { font-family: "DM Serif Display"; src: url("/assets/fonts/dm-serif-display-italic-latin.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+  /* Metric-matched fallbacks so the swap to the web fonts doesn't shift the layout. */
+  @font-face { font-family: "Archivo Fallback"; src: local("Arial"), local("ArialMT"); size-adjust: 98.8%; ascent-override: 88.9%; descent-override: 21.3%; line-gap-override: 0%; }
+  @font-face { font-family: "Alfa Slab One Fallback"; src: local("Arial Bold"), local("Arial-BoldMT"); size-adjust: 112%; ascent-override: 92.5%; descent-override: 29.8%; line-gap-override: 0%; }
   :root {
     --black: #16141A;
     --black-deep: #0C0B0E;
+    --ink-80: #2A272F;
     --white: #F6F4EF;
     --paper: #ECE8DF;
     --card: #FBFAF6;
     --ink-60: #5D5A55;
     --red: #D7261E;
     --red-pressed: #A81C16;
+    --brass: #A8833A;
     --line: rgba(22,20,26,0.18);
+    --muted-dark: rgba(246,244,239,0.75);
     --gutter: 16px;
+    --font-body: "Archivo", "Archivo Fallback", "Helvetica Neue", Arial, sans-serif;
+    --font-display: "Alfa Slab One", "Alfa Slab One Fallback", "Rockwell Extra Bold", Georgia, serif;
+    --font-script: "Mr Dafoe", "Brush Script MT", cursive;
+    --font-serif: "DM Serif Display", Georgia, serif;
+    --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   }
+  @media (min-width: 700px) { :root { --gutter: 32px; } }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
     margin: 0;
-    font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--font-body);
     font-size: 17px;
     line-height: 1.55;
     color: var(--black);
@@ -92,86 +110,110 @@
     -webkit-font-smoothing: antialiased;
   }
   img { max-width: 100%; height: auto; display: block; }
-  a { color: var(--red); }
-  a:hover { color: var(--black); }
-  :focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
+  a { color: var(--black); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+  a:hover { text-decoration-thickness: 2px; }
+  .dark a:not(.btn) { color: var(--white); }
+  :focus-visible { outline: 3px solid rgba(215,38,30,0.55); outline-offset: 2px; }
   .skip { position: absolute; left: -9999px; }
   .skip:focus { left: var(--gutter); top: var(--gutter); background: var(--black); color: var(--white); padding: 8px 12px; z-index: 10; }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 var(--gutter); }
   section { padding: 64px 0; }
-  @media (min-width: 900px) { section { padding: 96px 0; } }
+  @media (min-width: 900px) { section { padding: 80px 0; } }
   .dark { background: var(--black); color: var(--white); }
   .paper { background: var(--paper); }
   .eyebrow {
-    display: block; font-weight: 700; font-size: 12px; letter-spacing: 0.24em;
-    text-transform: uppercase; color: var(--red); margin: 0 0 18px;
+    display: block; font-weight: 700; font-size: 13px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--black); margin: 0 0 16px;
   }
-  .dark .eyebrow { color: var(--red); }
-  h1, h2, h3 { font-family: "Archivo Black", Archivo, sans-serif; font-weight: 400; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
-  h1 { font-size: clamp(36px, 5vw, 60px); line-height: 1; }
+  .dark .eyebrow { color: var(--brass); }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; letter-spacing: 0; text-wrap: balance; }
+  h1, h2 { text-transform: uppercase; }
+  h1 { font-size: clamp(32px, 5vw, 60px); line-height: 1.06; text-shadow: 3px 3px 0 var(--red); }
+  @media (max-width: 699px) { h1 { text-shadow: 2px 2px 0 var(--red); } }
   h1 .h1-main { display: block; }
-  h1 .h1-sub { display: block; color: var(--red); margin-top: 0.2em; font-size: 0.62em; letter-spacing: -0.01em; }
-  h2 { font-size: clamp(32px, 4.2vw, 50px); line-height: 1.02; }
-  h3 { font-size: 22px; line-height: 1.15; letter-spacing: 0; }
+  h1 .h1-sub { display: block; margin-top: 0.35em; font-size: 0.5em; line-height: 1.1; text-shadow: none; }
+  h2 { font-size: clamp(28px, 4vw, 44px); line-height: 1.04; }
+  h3 { font-size: 21px; line-height: 1.15; }
   .lead { font-size: 19px; line-height: 1.55; max-width: 620px; margin: 20px 0 0; }
   .muted { color: var(--ink-60); }
-  .dark .muted { color: rgba(246,244,239,0.75); }
+  .dark .muted { color: var(--muted-dark); }
   .label { font-weight: 700; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 10px; }
+
+  /* Logo: live type, as in the design system (script Retro, slab BOOTH). */
+  .logo { display: inline-flex; align-items: center; gap: 8px; color: var(--white); text-decoration: none; line-height: 1; }
+  .logo .script { font-family: var(--font-script); font-size: 34px; text-shadow: 2px 2px 0 var(--brass); transform: rotate(-5deg); padding: 2px 4px 4px 0; }
+  .logo .caps { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.18em; color: var(--red); text-shadow: 2px 2px 0 #000; }
+  .logo.stacked { flex-direction: column; gap: 6px; }
+  .logo.stacked .script { font-size: 46px; padding: 0 6px; }
+  .logo.stacked .caps { font-size: 16px; padding: 4px 10px 4px calc(10px + 0.18em); border-top: 2px solid var(--white); border-bottom: 2px solid var(--white); }
+  .tagline { font-family: var(--font-serif); font-style: italic; font-size: 17px; line-height: 1.2; margin: 10px 0 0; }
 
   /* Header */
   .site-header { background: var(--black); color: var(--white); position: sticky; top: 0; z-index: 5; }
   @media (max-width: 699px) { .site-header { position: static; } }
-  .site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
-  .logo { display: inline-flex; flex-direction: column; color: var(--white); text-decoration: none; line-height: 1; }
-  .logo .word { font-family: "Archivo Black", Archivo, sans-serif; font-size: 20px; letter-spacing: -0.02em; }
-  .logo .bar { background: var(--red); color: var(--white); font-weight: 700; font-size: 10px; letter-spacing: 0.5em; text-indent: 0.5em; text-align: center; padding: 4px 0; margin-top: 4px; }
-  .nav { display: flex; gap: 20px; flex-wrap: wrap; }
-  .nav a { color: rgba(246,244,239,0.85); text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; }
-  .nav a:hover { color: var(--white); }
+  .site-header .wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 28px; min-height: 68px; padding-top: 10px; padding-bottom: 10px; }
+  .site-header .nav { margin-left: auto; }
+  .nav { display: flex; gap: 6px 24px; flex-wrap: wrap; }
+  .nav a { color: rgba(246,244,239,0.88); text-decoration: none; font-weight: 600; font-size: 14px; white-space: nowrap; }
+  .nav a:hover { color: var(--white); text-decoration: underline; text-decoration-color: var(--brass); }
+  .header-cta { flex: none; }
 
   /* Buttons */
   .btn {
-    display: inline-block; font-weight: 700; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase;
-    text-decoration: none; padding: 16px 24px; border-radius: 2px; border: 2px solid transparent; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: var(--font-body); font-weight: 700; font-size: 16px; letter-spacing: 0.02em; line-height: 1.2;
+    text-decoration: none; padding: 14px 24px; border-radius: 4px; border: 2px solid transparent; cursor: pointer;
+    transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
   }
+  .btn:active { transform: translateY(1px); }
+  .btn-sm { font-size: 14px; padding: 8px 14px; }
   .btn-primary { background: var(--red); color: var(--white); }
   .btn-primary:hover { background: var(--red-pressed); color: var(--white); }
+  .btn-secondary { background: var(--black); color: var(--white); }
+  .btn-secondary:hover { background: var(--ink-80); color: var(--white); }
   .btn-outline { background: transparent; color: var(--black); border-color: var(--black); }
-  .btn-outline:hover { background: var(--black); color: var(--white); }
+  .btn-outline:hover { background: var(--paper); color: var(--black); }
+  .paper .btn-outline:hover { background: #E0DACD; }
   .dark .btn-outline { color: var(--white); border-color: var(--white); }
-  .dark .btn-outline:hover { background: var(--white); color: var(--black); }
+  .dark .btn-outline:hover { background: rgba(246,244,239,0.1); color: var(--white); }
   .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 
-  /* Hero */
-  .hero { padding: 48px 0 56px; background: var(--white); }
-  @media (min-width: 900px) { .hero { padding: 72px 0 96px; } }
+  /* Hero: Booth Black, as in the design system UI kit */
+  .hero { padding: 48px 0 64px; background: var(--black); color: var(--white); }
+  @media (min-width: 900px) { .hero { padding: 72px 0 88px; } }
+  .hero .eyebrow { color: var(--brass); }
+  .hero .lead { color: rgba(246,244,239,0.85); }
+  .hero .btn-outline { color: var(--white); border-color: var(--white); }
+  .hero .btn-outline:hover { background: rgba(246,244,239,0.1); }
   .hero-grid { display: grid; gap: 40px; align-items: center; }
-  @media (min-width: 900px) { .hero-grid { grid-template-columns: 1.05fr 1fr; } }
-  .hero-media { border-radius: 4px; overflow: hidden; aspect-ratio: 4 / 3; }
+  @media (min-width: 900px) { .hero-grid { grid-template-columns: 1.05fr 1fr; gap: 56px; } }
+  .hero-media { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 4 / 3; }
   .hero-media img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; }
+  .hero-media::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 8px var(--black), inset 0 0 0 9px var(--brass); pointer-events: none; }
 
   /* Cards */
-  .grid-2, .grid-3, .grid-4 { display: grid; gap: 16px; }
+  .grid-2, .grid-3, .grid-4 { display: grid; gap: 20px; }
   @media (min-width: 700px) { .grid-2 { grid-template-columns: repeat(2, 1fr); } .grid-3 { grid-template-columns: repeat(3, 1fr); } .grid-4 { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 1000px) { .grid-4 { grid-template-columns: repeat(4, 1fr); } }
-  .card { background: var(--card); border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(22,20,26,0.12); overflow: hidden; display: flex; flex-direction: column; }
+  .card { background: var(--card); border-radius: 8px; box-shadow: 0 1px 2px rgba(22,20,26,0.08), inset 0 0 0 1px rgba(22,20,26,0.10); overflow: hidden; display: flex; flex-direction: column; }
   .card-body { padding: 24px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
-  .card-media { aspect-ratio: 4 / 5; background: var(--paper); }
+  .card-media { aspect-ratio: 4 / 5; background: var(--paper); overflow: hidden; }
   .card-media img { width: 100%; height: 100%; object-fit: cover; }
   .card-media.contain img { object-fit: contain; }
   .card-media.landscape { aspect-ratio: 3 / 2; }
   .points { list-style: none; padding: 0; margin: 4px 0 0; display: grid; gap: 6px; }
-  .points li::before { content: "\2192"; color: var(--red); font-weight: 700; margin-right: 8px; }
+  .points li::before { content: "\2192"; color: var(--black); font-weight: 700; margin-right: 8px; }
   .card .btn { align-self: flex-start; margin-top: auto; }
 
-  .dark-card { background: var(--black); color: var(--white); border-radius: 4px; padding: 28px; display: flex; flex-direction: column; gap: 10px; min-height: 170px; }
-  .num { font-family: "Archivo Black", Archivo, sans-serif; font-size: 40px; line-height: 1; color: var(--red); }
+  .dark-card { background: var(--black); color: var(--white); border-radius: 8px; padding: 30px; display: flex; flex-direction: column; gap: 10px; min-height: 170px; box-shadow: inset 0 0 0 6px var(--black), inset 0 0 0 7px var(--brass); }
+  .num { font-family: var(--font-display); font-size: 40px; line-height: 1; color: var(--black); }
+  .dark .num, .dark-card .num { color: var(--brass); }
 
   /* Strips and steps */
   .steps { counter-reset: step; display: grid; gap: 24px; margin: 40px 0 0; padding: 0; list-style: none; }
   @media (min-width: 900px) { .steps { grid-template-columns: repeat(3, 1fr); } }
-  .steps li { border-top: 3px solid var(--black); padding-top: 16px; }
-  .dark .steps li { border-color: var(--white); }
+  .steps li { border-top: 2px solid var(--black); padding-top: 16px; }
+  .dark .steps li { border-color: var(--brass); }
   .steps .num { display: block; margin-bottom: 8px; }
   .strips { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); margin-top: 48px; }
   .strips img { border-radius: 4px; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
@@ -181,10 +223,10 @@
   .faq details { border-bottom: 1px solid var(--line); }
   .faq summary {
     cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px;
-    padding: 20px 0; font-family: "Archivo Black", Archivo, sans-serif; font-size: 20px; letter-spacing: -0.01em;
+    padding: 20px 0; font-family: var(--font-display); font-size: 19px; line-height: 1.25;
   }
   .faq summary::-webkit-details-marker { display: none; }
-  .faq summary::after { content: "+"; font-family: Archivo, sans-serif; font-weight: 700; font-size: 26px; line-height: 1; color: var(--red); }
+  .faq summary::after { content: "+"; font-family: var(--font-body); font-weight: 700; font-size: 26px; line-height: 1; color: var(--black); }
   .faq details[open] summary::after { content: "\2212"; }
   .faq details p { margin: 0 0 22px; max-width: 70ch; color: var(--ink-60); }
 
@@ -193,40 +235,44 @@
   @media (min-width: 900px) { .enquire-grid { grid-template-columns: 1fr 1.2fr; } }
   .contact-line { font-size: 19px; margin: 8px 0 0; }
   .contact-line a { color: var(--white); font-weight: 700; }
-  form.enquiry { background: var(--card); color: var(--black); border-radius: 4px; padding: 28px; display: grid; gap: 18px; }
+  form.enquiry { background: var(--card); color: var(--black); border-radius: 8px; padding: 28px; display: grid; gap: 18px; }
+  .dark form.enquiry a, form.enquiry a { color: var(--black); }
   form.enquiry .row { display: grid; gap: 18px; }
   @media (min-width: 640px) { form.enquiry .row { grid-template-columns: 1fr 1fr; } }
   .field { display: flex; flex-direction: column; gap: 6px; }
   .field label { font-weight: 700; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
   .field input, .field select, .field textarea {
     font: inherit; font-size: 16px; color: var(--black); background: #fff;
-    border: 1.5px solid rgba(22,20,26,0.2); border-radius: 2px; padding: 13px 14px; width: 100%;
+    border: 2px solid var(--black); border-radius: 4px; padding: 12px 14px; width: 100%;
   }
+  .field input::placeholder, .field textarea::placeholder { color: #7A766F; }
   .field textarea { min-height: 110px; resize: vertical; }
-  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(215,38,30,0.2); }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(215,38,30,0.35); }
   .fine { font-size: 13px; color: var(--ink-60); margin: 0; }
   form.enquiry .btn { justify-self: start; }
 
   /* Footer */
-  .site-footer { background: var(--black); color: var(--white); padding: 40px 0 48px; }
-  .site-footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; align-items: center; }
+  .site-footer { background: var(--black); color: var(--white); padding: 48px 0 56px; }
+  .site-footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 32px; align-items: center; }
   .site-footer a { color: var(--white); text-decoration: none; }
   .site-footer a:hover { text-decoration: underline; }
-  .site-footer .small { font-size: 14px; color: rgba(246,244,239,0.7); }
+  .site-footer .small { font-size: 14px; color: var(--muted-dark); }
+  .site-footer .brand { display: flex; flex-direction: column; align-items: center; }
+  .site-footer .nav { flex: 1 1 360px; justify-content: center; }
 </style>
 <style>
   .crumbs { font-size: 13px; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 24px; color: var(--ink-60); }
   .crumbs a { color: inherit; }
   .model-hero { display: grid; gap: 32px; align-items: start; }
   @media (min-width: 900px) { .model-hero { grid-template-columns: 1.1fr 1fr; gap: 56px; } }
-  .model-hero .hero-photo { margin: 0; background: var(--card); border: 1px solid var(--line); }
+  .model-hero .hero-photo { margin: 0; background: var(--card); border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(22,20,26,0.10); }
   .model-hero .hero-photo img { display: block; width: 100%; height: auto; }
   .gallery { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 40px; }
   @media (min-width: 700px) { .gallery { grid-template-columns: 1fr 1fr; } }
-  .gallery img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+  .gallery img { display: block; width: 100%; height: auto; border-radius: 8px; }
   .spec-grid { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 40px; }
   @media (min-width: 900px) { .spec-grid { grid-template-columns: repeat(3, 1fr); } }
-  .spec-grid > div { background: var(--card); border: 1px solid var(--line); padding: 24px; border-radius: 4px; }
+  .spec-grid > div { background: var(--card); padding: 24px; border-radius: 8px; box-shadow: 0 1px 2px rgba(22,20,26,0.08), inset 0 0 0 1px rgba(22,20,26,0.10); }
   .spec-grid h3 { margin: 0 0 8px; }
   .note { font-size: 14px; color: var(--ink-60); margin-top: 24px; }
 </style>
@@ -242,18 +288,15 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="logo" href="/" aria-label="Retro Booth home">
-      <span class="word">RETRO</span>
-      <span class="bar">BOOTH</span>
-    </a>
+    <a class="logo" href="/" aria-label="Retro Booth home"><span class="script">Retro</span><span class="caps">BOOTH</span></a>
     <nav class="nav" aria-label="Main">
       <a href="/#booths">Booths</a>
       <a href="/#customise">Customise</a>
       <a href="/#ownership">Ownership</a>
       <a href="/#faq">FAQ</a>
       <a href="/venues/">Event Venues</a>
-      <a href="/#enquire">Enquire</a>
     </nav>
+    <a class="btn btn-primary btn-sm header-cta" href="/#enquire">Enquire</a>
   </div>
 </header>
 
@@ -274,7 +317,7 @@
           <li>Instant prints and digital copies</li>
           <li>Guests pay at the booth</li>
           </ul>
-          <p style="margin-top:28px"><a class="btn" href="/?model=open-style#enquire">Enquire about this booth</a></p>
+          <p style="margin-top:28px"><a class="btn btn-primary" href="/?model=open-style#enquire">Enquire about this booth</a></p>
         </div>
       </div>
     </div>
@@ -332,16 +375,16 @@
       <p class="lead muted">Tell us about your venue and we will come back with a quote. You can also call or email us directly.</p>
       <p class="contact-line"><a href="tel:+61388998999">03 8899 8999</a></p>
       <p class="contact-line"><a href="mailto:hello@retrobooth.com.au">hello@retrobooth.com.au</a></p>
-      <p style="margin-top:24px"><a class="btn" href="/?model=open-style#enquire">Send an enquiry</a></p>
+      <p style="margin-top:24px"><a class="btn btn-primary" href="/?model=open-style#enquire">Send an enquiry</a></p>
     </div>
   </section>
 </main>
 
 <footer class="site-footer">
   <div class="wrap">
-    <div>
-      <div class="logo" aria-hidden="true"><span class="word">RETRO</span><span class="bar">BOOTH</span></div>
-      <p class="small" style="margin:12px 0 0">Made for hospitality.</p>
+    <div class="brand">
+      <div class="logo stacked" aria-hidden="true"><span class="script">Retro</span><span class="caps">BOOTH</span></div>
+      <p class="tagline">Made for hospitality.</p>
     </div>
     <nav class="nav" aria-label="Footer">
       <a href="/#booths">Booths</a>
