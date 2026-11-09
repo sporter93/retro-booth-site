@@ -157,6 +157,18 @@
   .nav a { color: rgba(246,244,239,0.88); text-decoration: none; font-weight: 600; font-size: 14px; white-space: nowrap; }
   .nav a:hover { color: var(--white); text-decoration: underline; text-decoration-color: var(--brass); }
   .header-cta { flex: none; }
+  /* Phones: logo and CTA on one row, the links on one scrollable row below. */
+  @media (max-width: 799px) {
+    .site-header .wrap { justify-content: space-between; }
+    .site-header .nav {
+      order: 3; flex: 1 0 100%; margin: 0 calc(var(--gutter) * -1); padding: 4px var(--gutter) 6px;
+      flex-wrap: nowrap; gap: 20px; overflow-x: auto; scrollbar-width: none;
+      -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent);
+    }
+    .site-header .nav::-webkit-scrollbar { display: none; }
+    .site-header .nav a { font-size: 14px; padding: 6px 0; }
+    .site-header .nav a:last-child { padding-right: 32px; }
+  }
 
   /* Buttons */
   .btn {
