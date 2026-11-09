@@ -89,7 +89,11 @@ function serveFile(req, res, file, st) {
     headers['Content-Length'] = stat.size;
     res.writeHead(200, { ...SECURITY_HEADERS, ...headers });
     if (req.method === 'HEAD') return res.end();
-    fs.createReadStream(file).pipe(res);
+    const stream = fs.createReadStream(file);
+    // A read error after headers are sent can only be handled by dropping the
+    // connection; without this handler it would crash the process.
+    stream.on('error', (e) => { console.error('Read error', file, e.code); res.destroy(); });
+    stream.pipe(res);
   });
 }
 
@@ -125,6 +129,7 @@ function errorPage(res, status, message) {
 function handleEnquiry(req, res) {
   const ip = (req.headers['fly-client-ip'] || req.socket.remoteAddress || '').toString();
   let size = 0; const chunks = [];
+  req.on('error', (e) => console.error('Enquiry request error', e.code || e.message));
   req.on('data', (c) => {
     size += c.length;
     if (size > MAX_BODY) { req.destroy(); return; }
@@ -177,8 +182,13 @@ function handleEnquiry(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  req.on('error', (e) => console.error('Request error', e.code || e.message));
+  res.on('error', (e) => console.error('Response error', e.code || e.message));
   const host = (req.headers.host || '').toLowerCase();
-  const url = new URL(req.url, 'http://localhost');
+  let url;
+  try { url = new URL(req.url, 'http://localhost'); } catch {
+    return send(res, 400, 'Bad request', { 'Content-Type': 'text/plain; charset=utf-8', Connection: 'close' });
+  }
   // Redirect www to the bare domain.
   if (host === 'www.retrobooth.com.au') {
     return send(res, 301, '', { Location: `https://retrobooth.com.au${url.pathname}${url.search}` });
