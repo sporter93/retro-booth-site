@@ -8,23 +8,24 @@ Marketing site for Retro Booth (retrobooth.com.au), hosted on Fly.io.
 - `server.js` — small Node server (no dependencies) that serves `site/` and emails enquiries from the homepage form (`POST /api/enquiry`).
 - `Dockerfile`, `fly.toml` — Fly.io build and app settings (Sydney region).
 
-## Enquiry email (Microsoft 365)
+## Enquiry email (Resend)
 
-The form posts to `/api/enquiry`. The server checks the spam trap, rate-limits (5 per connection per 10 minutes), then sends the enquiry through Microsoft 365 (Microsoft Graph `sendMail`) from `hello@retrobooth.com.au`, with the visitor's email as the reply-to address. A copy is saved in the mailbox's Sent Items.
+The form posts to `/api/enquiry`. The server checks the spam trap, rate-limits (5 per connection per 10 minutes), then sends the enquiry through [Resend](https://resend.com) from the verified `mail.retrobooth.com.au` domain, with the visitor's email as the reply-to address.
 
-One-off setup in Microsoft 365:
+One-off setup in Resend:
 
-1. Add `retrobooth.com.au` as a domain in the Microsoft 365 admin centre and add its DNS records (MX, SPF, autodiscover).
-2. Create a shared mailbox `hello@retrobooth.com.au`.
-3. In the Entra admin centre, create an app registration ("Retro Booth website"), add the Microsoft Graph **application** permission `Mail.Send`, grant admin consent, and create a client secret.
-4. Recommended: limit the app to the shared mailbox only (Exchange RBAC for Applications or an application access policy).
+1. Add and verify the sending domain `mail.retrobooth.com.au` in Resend, adding the DKIM/SPF/MX/CNAME records it provides (DNS for retrobooth.com.au is managed in the Microsoft 365 admin centre).
+2. Create a **sending-only** API key restricted to that domain.
 
 Then set the Fly secrets (never commit them):
 
 ```sh
-fly secrets set MS_TENANT_ID=... MS_CLIENT_ID=... MS_CLIENT_SECRET=... \
-  MAIL_FROM=hello@retrobooth.com.au ENQUIRY_TO=hello@retrobooth.com.au
+fly secrets set RESEND_API_KEY=re_... \
+  MAIL_FROM='Retro Booth <enquiries@mail.retrobooth.com.au>' \
+  ENQUIRY_TO=hello@retrobooth.com.au
 ```
+
+The sender must be an address on the Resend-verified domain (`mail.retrobooth.com.au`); notifications are delivered to `ENQUIRY_TO` (any address).
 
 ## Deploy
 
