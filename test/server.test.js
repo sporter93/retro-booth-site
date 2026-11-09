@@ -30,3 +30,19 @@ test('static pages, 404 and healthz still work', async () => {
   assert.equal((await fetch(`${srv.base}/no-such-page`)).status, 404);
   assert.equal(await (await fetch(`${srv.base}/healthz`)).text(), 'ok');
 });
+
+test('pages send a CSP that allows each inline script by hash', async () => {
+  const crypto = require('node:crypto');
+  for (const page of ['/', '/photo-booth-revenue-share-vs-buying/']) {
+    const res = await fetch(`${srv.base}${page}`);
+    const csp = res.headers.get('content-security-policy') || '';
+    assert.match(csp, /default-src 'self'/);
+    assert.match(csp, /object-src 'none'/);
+    const html = await res.text();
+    for (const m of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
+      const h = crypto.createHash('sha256').update(m[1]).digest('base64');
+      assert.ok(csp.includes(`'sha256-${h}'`), `missing hash for inline script on ${page}`);
+    }
+    assert.doesNotMatch(html, /\son(submit|click|load|input|change)=/, `inline handler on ${page}`);
+  }
+});

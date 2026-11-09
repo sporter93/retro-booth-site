@@ -370,7 +370,7 @@
       <span class="eyebrow">Run your own numbers</span>
       <h2 id="calc-title">How many sessions does it take for owning to pay off?</h2>
       <p class="lead muted">Owning comes out ahead once the share of takings you'd otherwise give the operator is more than your monthly cost of owning. Enter your own figures. The starting values are examples only, not Retro Booth prices.</p>
-      <form class="calc" id="calc" onsubmit="return false">
+      <form class="calc" id="calc">
         <label>Sessions per week<input type="number" id="c-sessions" min="0" step="1" value="40" inputmode="numeric"></label>
         <label>Price per session ($)<input type="number" id="c-price" min="0" step="0.5" value="10" inputmode="decimal"></label>
         <label>Your share on revenue share (%)<input type="number" id="c-share" min="0" max="100" step="1" value="30" inputmode="numeric"></label>
@@ -461,6 +461,7 @@
     $('r-break').textContent = perSession > 0 ? 'About ' + Math.ceil(c / perSession) + ' sessions a week' : 'Not reachable with these figures';
   }
   ['c-sessions', 'c-price', 'c-share', 'c-cost'].forEach(function (id) { $(id).addEventListener('input', run); });
+  $('calc').addEventListener('submit', function (e) { e.preventDefault(); });
   run();
 })();
 </script>

@@ -16,6 +16,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
+const crypto = require('node:crypto');
 
 const ROOT = path.join(__dirname, 'site');
 const PORT = Number(process.env.PORT) || 8080;
@@ -31,7 +32,41 @@ const TYPES = {
   '.woff2': 'font/woff2', '.pdf': 'application/pdf',
 };
 
+// Content-Security-Policy. Inline <script> blocks in site/ are allowed by
+// hash, worked out at startup so editing a page can't silently break it.
+// JSON-LD blocks aren't executed, so they need no hash.
+function inlineScriptHashes(dir) {
+  const hashes = new Set();
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true, recursive: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.html')) continue;
+    const html = fs.readFileSync(path.join(entry.parentPath || entry.path, entry.name), 'utf8');
+    for (const m of html.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script>/gi)) {
+      const attrs = m[1] || '';
+      if (/\ssrc=/i.test(attrs) || /type=["']?application\/ld\+json/i.test(attrs)) continue;
+      hashes.add(`'sha256-${crypto.createHash('sha256').update(m[2]).digest('base64')}'`);
+    }
+  }
+  return [...hashes].sort();
+}
+
+const ANALYTICS = 'https://umami.connorfanning.me';
+const CSP = [
+  "default-src 'self'",
+  `script-src 'self' ${ANALYTICS} ${inlineScriptHashes(ROOT).join(' ')}`.trim(),
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data:",
+  `connect-src 'self' ${ANALYTICS}`,
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join('; ');
+
 const SECURITY_HEADERS = {
+  'Content-Security-Policy': CSP,
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-Frame-Options': 'SAMEORIGIN',
