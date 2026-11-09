@@ -331,6 +331,16 @@
   .prose li { line-height: 1.6; margin-bottom: 6px; }
   .compare td, .compare th { font-size: 16px; }
   .compare tbody th { width: 22%; }
+  /* Phones: each row of the comparison table becomes its own card */
+  @media (max-width: 699px) {
+    .compare.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .compare.stack, .compare.stack tbody, .compare.stack tr, .compare.stack th, .compare.stack td { display: block; width: auto; }
+    .compare.stack { background: none; border-radius: 0; overflow: visible; margin-top: 24px; }
+    .compare.stack tr { background: var(--card); border-radius: 8px; margin-top: 12px; padding-bottom: 8px; box-shadow: 0 1px 2px rgba(22,20,26,0.08), inset 0 0 0 1px rgba(22,20,26,0.10); }
+    .compare.stack tbody th { font-family: var(--font-display); font-weight: 400; font-size: 18px; line-height: 1.2; padding: 16px 16px 10px; }
+    .compare.stack td { display: grid; grid-template-columns: 7.5em 1fr; gap: 12px; border-bottom: 0; padding: 8px 16px; }
+    .compare.stack td::before { content: attr(data-label); font-weight: 700; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-60); padding-top: 2px; }
+  }
   .calc { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: 32px; }
   .calc label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: 15px; }
   .calc input { font: inherit; font-weight: 400; padding: 12px 14px; border: 2px solid var(--black); border-radius: 4px; background: #fff; }
@@ -394,16 +404,16 @@
       <span class="eyebrow">Side by side</span>
       <h2 id="table-title">How revenue share, finance and buying outright compare</h2>
       <div style="overflow-x:auto">
-      <table class="compare">
+      <table class="compare stack">
         <thead><tr><th scope="col"></th><th scope="col">Revenue share</th><th scope="col">Buy on finance</th><th scope="col">Buy outright</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Upfront cost</th><td>Usually nothing</td><td>Little or nothing upfront, then regular repayments (subject to approval)</td><td>The full purchase price</td></tr>
-          <tr><th scope="row">Who owns the booth</th><td>The operator</td><td>You, under the terms of your finance</td><td>You</td></tr>
-          <tr><th scope="row">Who keeps the session revenue</th><td>Split between you and the operator</td><td>You</td><td>You</td></tr>
-          <tr><th scope="row">Ongoing costs</th><td>Set by your agreement with the operator</td><td>Repayments, software and support subscription, paper and ink</td><td>Software and support subscription, paper and ink</td></tr>
-          <tr><th scope="row">Branding and pricing</th><td>On the operator's terms</td><td>Yours to set</td><td>Yours to set</td></tr>
-          <tr><th scope="row">At the end of the agreement</th><td>The booth leaves with the operator</td><td>You keep the booth once the finance is paid</td><td>You already own it</td></tr>
-          <tr><th scope="row">Best when</th><td>Foot traffic is low or uncertain, or you want to trial a booth</td><td>Traffic is steady and you want to keep the revenue without a large upfront cost</td><td>Traffic is steady and you have the capital</td></tr>
+          <tr><th scope="row">Upfront cost</th><td data-label="Revenue share">Usually nothing</td><td data-label="Buy on finance">Little or nothing upfront, then regular repayments (subject to approval)</td><td data-label="Buy outright">The full purchase price</td></tr>
+          <tr><th scope="row">Who owns the booth</th><td data-label="Revenue share">The operator</td><td data-label="Buy on finance">You, under the terms of your finance</td><td data-label="Buy outright">You</td></tr>
+          <tr><th scope="row">Who keeps the session revenue</th><td data-label="Revenue share">Split between you and the operator</td><td data-label="Buy on finance">You</td><td data-label="Buy outright">You</td></tr>
+          <tr><th scope="row">Ongoing costs</th><td data-label="Revenue share">Set by your agreement with the operator</td><td data-label="Buy on finance">Repayments, software and support subscription, paper and ink</td><td data-label="Buy outright">Software and support subscription, paper and ink</td></tr>
+          <tr><th scope="row">Branding and pricing</th><td data-label="Revenue share">On the operator's terms</td><td data-label="Buy on finance">Yours to set</td><td data-label="Buy outright">Yours to set</td></tr>
+          <tr><th scope="row">At the end of the agreement</th><td data-label="Revenue share">The booth leaves with the operator</td><td data-label="Buy on finance">You keep the booth once the finance is paid</td><td data-label="Buy outright">You already own it</td></tr>
+          <tr><th scope="row">Best when</th><td data-label="Revenue share">Foot traffic is low or uncertain, or you want to trial a booth</td><td data-label="Buy on finance">Traffic is steady and you want to keep the revenue without a large upfront cost</td><td data-label="Buy outright">Traffic is steady and you have the capital</td></tr>
         </tbody>
       </table>
       </div>
