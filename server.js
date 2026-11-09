@@ -15,6 +15,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const zlib = require('node:zlib');
 
 const ROOT = path.join(__dirname, 'site');
 const PORT = Number(process.env.PORT) || 8080;
@@ -38,27 +39,39 @@ const SECURITY_HEADERS = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 };
 
+// Text types worth compressing. Images and fonts are already compressed.
+const COMPRESSIBLE = new Set(['.html', '.css', '.js', '.json', '.txt', '.xml', '.webmanifest', '.svg']);
+const wantsGzip = (req) => /\bgzip\b/i.test(req.headers['accept-encoding'] || '');
+
 function send(res, status, body, headers = {}) {
   res.writeHead(status, { ...SECURITY_HEADERS, ...headers });
   res.end(body);
 }
 
-function notFound(res, head) {
+// Send a small in-memory text response, gzipped when the client accepts it.
+function sendText(req, res, status, body, headers = {}) {
+  if (req && body && wantsGzip(req)) {
+    return send(res, status, zlib.gzipSync(body), { ...headers, 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding' });
+  }
+  send(res, status, body, headers);
+}
+
+function notFound(req, res, head) {
   const file = path.join(ROOT, '404.html');
   fs.readFile(file, (err, data) => {
-    send(res, 404, head ? undefined : (err ? 'Not found' : data),
+    sendText(req, res, 404, head ? undefined : (err ? 'Not found' : data),
       { 'Content-Type': err ? 'text/plain; charset=utf-8' : TYPES['.html'], 'Cache-Control': 'no-cache' });
   });
 }
 
 function serveStatic(req, res, pathname) {
   let rel;
-  try { rel = decodeURIComponent(pathname); } catch { return notFound(res); }
-  if (rel.includes('\0')) return notFound(res);
+  try { rel = decodeURIComponent(pathname); } catch { return notFound(req, res); }
+  if (rel.includes('\0')) return notFound(req, res);
   const file = path.normalize(path.join(ROOT, rel));
-  if (file !== ROOT && !file.startsWith(ROOT + path.sep)) return notFound(res);
+  if (file !== ROOT && !file.startsWith(ROOT + path.sep)) return notFound(req, res);
   // Block server/source files that live outside site/ anyway; and hidden files.
-  if (rel.split('/').some((p) => p.startsWith('.'))) return notFound(res);
+  if (rel.split('/').some((p) => p.startsWith('.'))) return notFound(req, res);
 
   fs.stat(file, (err, st) => {
     if (!err && st.isDirectory()) {
@@ -68,32 +81,38 @@ function serveStatic(req, res, pathname) {
       }
       return serveFile(req, res, path.join(file, 'index.html'));
     }
-    if (err) return notFound(res, req.method === 'HEAD');
+    if (err) return notFound(req, res, req.method === 'HEAD');
     serveFile(req, res, file, st);
   });
 }
 
 function serveFile(req, res, file, st) {
   fs.stat(file, (err, stat) => {
-    if (err || !stat.isFile()) return notFound(res, req.method === 'HEAD');
+    if (err || !stat.isFile()) return notFound(req, res, req.method === 'HEAD');
     const ext = path.extname(file).toLowerCase();
     const isHtml = ext === '.html';
-    const etag = `W/"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
+    const gzip = COMPRESSIBLE.has(ext) && wantsGzip(req);
+    const etag = `W/"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}${gzip ? '-gz' : ''}"`;
     const headers = {
       'Content-Type': TYPES[ext] || 'application/octet-stream',
       'Cache-Control': isHtml || ext === '.xml' || ext === '.txt' ? 'no-cache' : 'public, max-age=604800',
       ETag: etag,
       'Last-Modified': stat.mtime.toUTCString(),
     };
+    if (COMPRESSIBLE.has(ext)) headers.Vary = 'Accept-Encoding';
     if (req.headers['if-none-match'] === etag) return send(res, 304, undefined, headers);
-    headers['Content-Length'] = stat.size;
+    if (gzip) headers['Content-Encoding'] = 'gzip';
+    else headers['Content-Length'] = stat.size;
     res.writeHead(200, { ...SECURITY_HEADERS, ...headers });
     if (req.method === 'HEAD') return res.end();
     const stream = fs.createReadStream(file);
     // A read error after headers are sent can only be handled by dropping the
     // connection; without this handler it would crash the process.
     stream.on('error', (e) => { console.error('Read error', file, e.code); res.destroy(); });
-    stream.pipe(res);
+    if (!gzip) return stream.pipe(res);
+    const gz = zlib.createGzip();
+    gz.on('error', (e) => { console.error('Gzip error', e.code || e.message); res.destroy(); });
+    stream.pipe(gz).pipe(res);
   });
 }
 
@@ -119,37 +138,55 @@ const FIELDS = [
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function errorPage(res, status, message) {
-  send(res, status, `<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Enquiry not sent | Retro Booth</title>
+function errorPage(req, res, status, message, headers = {}) {
+  sendText(req, res, status, `<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Enquiry not sent | Retro Booth</title>
 <style>body{font-family:Archivo,system-ui,sans-serif;background:#F6F4EF;color:#16141A;max-width:640px;margin:0 auto;padding:64px 20px;line-height:1.5}a{color:#D7261E;font-weight:600}</style></head>
 <body><h1>Sorry, your enquiry wasn't sent.</h1><p>${esc(message)}</p><p>Please call <a href="tel:+61388998999">03 8899 8999</a> or email <a href="mailto:hello@retrobooth.com.au">hello@retrobooth.com.au</a>, or <a href="/#enquire">go back and try again</a>.</p></body></html>`,
-  { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-store' });
+  { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-store', ...headers });
 }
+
+// Header-bound text (subject line, names): no CR/LF or other control
+// characters, collapsed whitespace, length capped.
+const oneLine = (s, max = 200) => String(s).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+// Free text: keep line breaks, drop other control characters.
+const multiLine = (s, max = 3000) => String(s).replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/g, ' ').trim().slice(0, max);
+// A single plain address (no display name, no list), used as reply_to.
+const EMAIL_RE = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
+const isPlainEmail = (s) => s.length <= 254 && EMAIL_RE.test(s) && !s.startsWith('.') && !s.includes('..');
 
 function handleEnquiry(req, res) {
   const ip = (req.headers['fly-client-ip'] || req.socket.remoteAddress || '').toString();
-  let size = 0; const chunks = [];
+  let size = 0; let tooLarge = false; const chunks = [];
+  // Answer 413 straight away and close the connection once it is sent, so
+  // the visitor sees the page instead of a reset connection.
+  const reject413 = () => {
+    tooLarge = true; chunks.length = 0;
+    errorPage(req, res, 413, 'The form was too large to send.', { Connection: 'close' });
+    res.on('finish', () => setTimeout(() => req.destroy(), 1000).unref());
+  };
   req.on('error', (e) => console.error('Enquiry request error', e.code || e.message));
+  if (Number(req.headers['content-length']) > MAX_BODY) { req.resume(); return reject413(); }
   req.on('data', (c) => {
+    if (tooLarge) return; // discard the rest
     size += c.length;
-    if (size > MAX_BODY) { req.destroy(); return; }
+    if (size > MAX_BODY) return reject413();
     chunks.push(c);
   });
   req.on('end', async () => {
-    if (size > MAX_BODY) return errorPage(res, 413, 'The form was too large to send.');
+    if (tooLarge) return;
     const data = new URLSearchParams(Buffer.concat(chunks).toString('utf8'));
     // Honeypot: real people leave this empty. Pretend success for bots.
     if (data.get('bot-field')) return send(res, 303, '', { Location: '/thanks/' });
-    if (rateLimited(ip)) return errorPage(res, 429, 'Too many enquiries were sent from your connection in a short time.');
+    if (rateLimited(ip)) return errorPage(req, res, 429, 'Too many enquiries were sent from your connection in a short time.');
 
-    const v = Object.fromEntries(FIELDS.map(([k]) => [k, (data.get(k) || '').trim().slice(0, 3000)]));
-    if (!v.name || !v.venue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) {
-      return errorPage(res, 400, 'Please include your name, business or venue, and a valid email address.');
+    const v = Object.fromEntries(FIELDS.map(([k]) => [k, k === 'notes' ? multiLine(data.get(k) || '') : oneLine(data.get(k) || '')]));
+    if (!v.name || !v.venue || !isPlainEmail(v.email)) {
+      return errorPage(req, res, 400, 'Please include your name, business or venue, and a valid email address.');
     }
     const { RESEND_API_KEY, MAIL_FROM, ENQUIRY_TO } = process.env;
     if (!RESEND_API_KEY || !MAIL_FROM || !ENQUIRY_TO) {
       console.error('Enquiry not sent: RESEND_API_KEY, MAIL_FROM or ENQUIRY_TO is not set');
-      return errorPage(res, 503, 'Our enquiry form is temporarily unavailable.');
+      return errorPage(req, res, 503, 'Our enquiry form is temporarily unavailable.');
     }
     const rows = FIELDS.filter(([k]) => v[k]).map(([k, label]) => [label, v[k]]);
     const html = '<table cellpadding="6" style="font-family:sans-serif;border-collapse:collapse">' +
@@ -162,21 +199,21 @@ function handleEnquiry(req, res) {
           from: MAIL_FROM,
           to: ENQUIRY_TO.split(',').map((s) => s.trim()).filter(Boolean),
           reply_to: [v.email],
-          subject: `Website enquiry: ${v.name} (${v.venue})`,
+          subject: oneLine(`Website enquiry: ${v.name} (${v.venue})`, 250),
           html,
         }),
         signal: AbortSignal.timeout(10000),
       });
       if (!r.ok) {
         console.error('Resend send error', r.status, (await r.text()).slice(0, 500));
-        return errorPage(res, 502, 'Our email service had a problem.');
+        return errorPage(req, res, 502, 'Our email service had a problem.');
       }
       const j = await r.json().catch(() => ({}));
       console.log('Enquiry sent for', v.venue, j.id || '');
       send(res, 303, '', { Location: '/thanks/' });
     } catch (e) {
       console.error('Enquiry send failed', e.message);
-      errorPage(res, 502, 'Our email service could not be reached.');
+      errorPage(req, res, 502, 'Our email service could not be reached.');
     }
   });
 }
@@ -189,11 +226,13 @@ const server = http.createServer((req, res) => {
   try { url = new URL(req.url, 'http://localhost'); } catch {
     return send(res, 400, 'Bad request', { 'Content-Type': 'text/plain; charset=utf-8', Connection: 'close' });
   }
-  // Redirect www to the bare domain.
-  if (host === 'www.retrobooth.com.au') {
+  if (url.pathname === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
+  // Redirect www and the Fly preview host (*.fly.dev) to the bare domain.
+  // The health check above stays reachable on any host.
+  const hostname = host.replace(/:\d+$/, '');
+  if (hostname === 'www.retrobooth.com.au' || hostname.endsWith('.fly.dev')) {
     return send(res, 301, '', { Location: `https://retrobooth.com.au${url.pathname}${url.search}` });
   }
-  if (url.pathname === '/healthz') return send(res, 200, 'ok', { 'Content-Type': 'text/plain' });
   if (url.pathname === '/api/enquiry') {
     if (req.method !== 'POST') return send(res, 405, 'Method not allowed', { Allow: 'POST' });
     return handleEnquiry(req, res);
