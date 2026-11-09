@@ -45,3 +45,11 @@ Then add the DNS records `fly certs show retrobooth.com.au` prints. DNS for retr
 ```sh
 node server.js   # http://localhost:8080
 ```
+
+## Tests
+
+```sh
+node --test test/*.test.js
+```
+
+No dependencies. The tests start the real server on a free port; the enquiry tests send to a local stub of the Resend API with a dummy key, so no email goes out. `SHOW_PAYLOAD=1` prints what the stub receives.
