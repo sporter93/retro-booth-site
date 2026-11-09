@@ -8,18 +8,25 @@
   <meta name="description" content="Thanks for your enquiry. Retro Booth will be in touch.">
   <meta http-equiv="refresh" content="3;url=/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/assets/fonts/archivo-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/alfa-slab-one-latin.woff2" as="font" type="font/woff2" crossorigin>
   <style>
+    @font-face { font-family: "Archivo"; src: url("/assets/fonts/archivo-latin-var.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+    @font-face { font-family: "Alfa Slab One"; src: url("/assets/fonts/alfa-slab-one-latin.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "Archivo Fallback"; src: local("Arial"), local("ArialMT"); size-adjust: 98.8%; ascent-override: 88.9%; descent-override: 21.3%; line-gap-override: 0%; }
+    @font-face { font-family: "Alfa Slab One Fallback"; src: local("Arial Bold"), local("Arial-BoldMT"); size-adjust: 112%; ascent-override: 92.5%; descent-override: 29.8%; line-gap-override: 0%; }
     :root {
       --black: #16141A;
       --white: #F6F4EF;
-      --red: #D7261E;
+      --ink-60: #5D5A55;
     }
     body {
       margin: 0;
       min-height: 100vh;
       background: var(--white);
       color: var(--black);
-      font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
+      font-family: "Archivo", "Archivo Fallback", "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
       display: grid;
       place-items: center;
       padding: 0 16px;
@@ -27,22 +34,27 @@
     }
     main { max-width: 560px; text-align: left; }
     .kicker {
-      font-size: 12px;
-      letter-spacing: 0.12em;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--red);
+      color: var(--black);
       margin: 0 0 12px;
     }
     h1 {
-      font-family: "Archivo Black", Archivo, sans-serif;
+      font-family: "Alfa Slab One", "Alfa Slab One Fallback", Georgia, serif;
       font-weight: 400;
+      text-transform: uppercase;
       font-size: clamp(32px, 6vw, 48px);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
+      line-height: 1.04;
       margin: 0 0 16px;
+      text-shadow: 3px 3px 0 #D7261E;
+      text-wrap: balance;
     }
     p { font-size: 18px; line-height: 1.5; margin: 0 0 16px; }
-    a { color: var(--red); font-weight: 600; }
+    a { color: var(--black); font-weight: 700; text-underline-offset: 0.18em; }
+    a:hover { text-decoration-thickness: 2px; }
+    :focus-visible { outline: 3px solid rgba(215,38,30,0.55); outline-offset: 2px; }
   </style>
   <script defer src="https://umami.connorfanning.me/script.js" data-website-id="0ea5703c-6c98-431b-895c-d9b7e842a0a5"></script>
   <script defer src="https://umami.connorfanning.me/recorder.js" data-website-id="0ea5703c-6c98-431b-895c-d9b7e842a0a5"></script>
